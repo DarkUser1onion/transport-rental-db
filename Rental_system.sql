@@ -42,7 +42,7 @@ CREATE TABLE Wallets
 	id INT NOT NULL PRIMARY KEY IDENTITY,
 	Number_card DECIMAL(16,0) NOT NULL,
 	THREE_code DECIMAL(3,0) NOT NULL,
-	Validity DECIMAL(4,0) NOT NULL
+	Validity DATE NOT NULL
 )
 
 CREATE TABLE Parking_Zones
@@ -51,4 +51,5 @@ CREATE TABLE Parking_Zones
 	Width DECIMAL(8,6) NOT NULL,
 	Length DECIMAL(8,6) NOT NULL,
 	Approximate_address NVARCHAR(255) NOT NULL
+
 )
