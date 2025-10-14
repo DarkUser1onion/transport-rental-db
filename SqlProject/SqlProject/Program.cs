@@ -33,6 +33,10 @@ internal class Program
         }
     }
     
+    private static void ConsoleOnCancelKeyPress(object? sender, ConsoleCancelEventArgs e)
+    {
+        Animation.Exit();
+    }
     
     
     static void Main(string[] args)
@@ -82,7 +86,7 @@ internal class Program
             
             try
             {
-                // con.Open();
+                con.Open();
             }
             catch (Exception)
             {
@@ -93,15 +97,20 @@ internal class Program
             }
             
             Animation.Welcome();
+            
+            Menu menu = new Menu();
+            
             while (true)
             {
                 Menu.StartMenu();
                 if (!int.TryParse(Console.ReadLine(), out var input))
-                    input = Int32.MaxValue;                
+                    input = Int32.MaxValue;
+
                 
                 switch ((CaseMenu)input)
                 {
                     case CaseMenu.RegistrationProfile:
+                        menu.RegistrationProfile().Upload(con);
                         break;
                     case CaseMenu.ManagementProfiles:
                         break;
@@ -126,12 +135,7 @@ internal class Program
                         break;
                 }
             }
+            ConsoleOnCancelKeyPress(new object(), null);
         }
-        ConsoleOnCancelKeyPress(new object(), null);
-    }
-
-    private static void ConsoleOnCancelKeyPress(object? sender, ConsoleCancelEventArgs e)
-    {
-        Animation.Exit();
     }
 }

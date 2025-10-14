@@ -35,7 +35,7 @@ public static class FormForSql
     
     public class Wallets
     {
-        private int NumberCard;
+        private ulong NumberCard;
         private int CvcCode;
         private DateTime Validity;
     }

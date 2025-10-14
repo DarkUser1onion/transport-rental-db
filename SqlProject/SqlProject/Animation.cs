@@ -21,7 +21,7 @@ public class Animation
                 Console.ForegroundColor = ConsoleColor.Red;
             
             Console.Write(welcome[i]);
-            Thread.Sleep(100);
+            Thread.Sleep(70);
             
             Console.Beep();
         }
@@ -51,7 +51,7 @@ public class Animation
         }
 
         if (!fastEnd)
-            Thread.Sleep(2000);
+            Thread.Sleep(1000);
         
         if(newLine)
             Console.WriteLine();
@@ -70,10 +70,22 @@ public class Animation
         Console.WriteLine(text);
     }
 
+    public static void PrintSetCursor(string text, int length, bool center = false, int durabily = 0)
+    {
+        if(center)
+            if (center)
+                for (int i = 0; i < Console.WindowHeight/2 - durabily/2; i++)
+                    Console.WriteLine();
+        
+        Console.SetCursorPosition((Console.WindowWidth - length) / 2, Console.CursorTop);
+        Console.Write(text);
+    }
+
     public static void Exit()
     {
         Console.Clear();
-        PrintRedText("Прощай!", true, true, 200);
+        Thread.Sleep(500);
+        PrintRedText("Прощай!", true, true, 100);
         Console.Clear();
     }
 
@@ -83,9 +95,8 @@ public class Animation
         StringBuilder str = new("Загрузка базы данных");
 
         PrintCenterTerminal(str.ToString(), true);
-        Thread.Sleep(1000);
 
-        for (int k = 0; k < 5; k++)
+        for (int k = 0; k < 6; k++)
         {
             for (int i = 1; i < str.Length;i++)
             {
@@ -98,5 +109,66 @@ public class Animation
             }
             str.Append('.');
         }
+
+    }
+    
+    public static void AnimationText(string text, bool deleteWord = false, int cursorPosition = 0, int sizeOldText = 0, bool center = false)
+    {
+        StringBuilder str = new(text);
+        
+        int getCursor = cursorPosition;
+
+        if (!center)
+        {
+            Console.SetCursorPosition(getCursor, Console.CursorTop - 1);
+            for (int j = 0; j < str.Length + 4 + sizeOldText; j++)
+            {
+                Console.Write(' ');
+            }
+        }
+        
+        
+        for (int k = 0; k < 6; k++)
+        {
+            for (int i = 1; i < str.Length;i++)
+            {
+                str[i] = char.Parse(str[i].ToString().ToUpper());
+
+                if (!center)
+                {
+                    Console.SetCursorPosition(getCursor, Console.CursorTop);
+                    Console.Write("::: " + str);
+                    Thread.Sleep(50);
+                }
+                else
+                {
+                    for (int z = 0; z < Console.WindowHeight/2; z++)
+                        Console.WriteLine();
+                    
+                    Console.SetCursorPosition((Console.WindowWidth - text.Length) / 2, Console.CursorTop);
+                    
+                    Console.Write(str);
+                    Thread.Sleep(50);
+                    Console.Clear();
+                }
+                
+
+                
+                str[i] = char.Parse(str[i].ToString().ToLower());
+
+            }
+        }
+
+        if (deleteWord && !center)
+        {
+            Console.SetCursorPosition(getCursor, Console.CursorTop);
+            for (int j = 0; j < str.Length + 4 + sizeOldText; j++)
+            {
+                Console.Write(' ');
+            }
+            Console.SetCursorPosition(getCursor, Console.CursorTop);
+        }
+        
+        
     }
 }
