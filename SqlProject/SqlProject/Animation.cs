@@ -4,6 +4,8 @@ namespace MyApp;
 
 public class Animation
 {
+    
+    
     public static void Welcome()
     {
         Console.Clear();
@@ -168,7 +170,6 @@ public class Animation
             }
             Console.SetCursorPosition(getCursor, Console.CursorTop);
         }
-        
         
     }
 }
