@@ -1,4 +1,5 @@
 using System.Data;
+using System.Data.SqlTypes;
 using Dapper;
 using Microsoft.Data.SqlClient;
 
@@ -8,7 +9,7 @@ public class Menu
 {
     interface IUploadInServer
     {
-        public void Upload(SqlConnection connection);
+        public bool Upload(SqlConnection connection);
     }
     
     public class UserRegistaryForm : IUploadInServer
@@ -16,7 +17,7 @@ public class Menu
         public string name { private get; set; }
         public string familyName { private get; set; }
         public string email { private get; set; }
-        public ulong numberCard { private get; set; }
+        public Decimal numberCard { private get; set; }
         public int cvcCode { private get; set; }
         public DateTime Validity { private get; set; }
         
@@ -26,23 +27,46 @@ public class Menu
             => $"{name} {familyName} {email} {numberCard} {cvcCode} {Validity}";
 
 
-        public void Upload(SqlConnection connection)
+        public bool Upload(SqlConnection connection)
         {
-            string connectionString =
-                "INSERT INTO Wallets (Number_card, THREE_code, Validity) VALUES (@numberCard, @cvcCode, @Validity)";
-
-            using (SqlCommand command = new SqlCommand(connectionString, connection))
+            try
             {
-                SqlParameter parameter = new SqlParameter("@numberCard", SqlDbType.Decimal);
-                parameter.Precision = 16;
-                parameter.Scale = 0;
-                parameter.Value = numberCard;
-                
-                command.Parameters.AddWithValue("@cvcCode", cvcCode);
-                command.Parameters.AddWithValue("@Validity", Validity);
-                
-                command.ExecuteNonQuery();
+                string connectionString =
+                    "INSERT INTO Wallets (Number_card, THREE_code, Validity) VALUES (@numberCard, @cvcCode, @Validity)";
+
+                using (SqlCommand command = new SqlCommand(connectionString, connection))
+                {
+                    command.Parameters.AddWithValue("@cvcCode", cvcCode);
+                    command.Parameters.AddWithValue("@Validity", Validity);
+                    command.Parameters.AddWithValue("@numberCard", numberCard);
+
+                    command.ExecuteNonQuery();
+                }
+
+                int id = connection.Query("SELECT id FROM Wallets WHERE Number_card = @numberCards",
+                    new { @numberCards = numberCard }).First().id;
+
+                connectionString =
+                    "INSERT INTO Users (Name, Family_Name, Email, Wallet) VALUES (@name, @familyName, @email, @Wallet)";
+
+                using (SqlCommand command = new SqlCommand(connectionString, connection))
+                {
+                    command.Parameters.AddWithValue("@name", name);
+                    command.Parameters.AddWithValue("@familyName", familyName);
+                    command.Parameters.AddWithValue("@email", email);
+                    command.Parameters.AddWithValue("@Wallet", id);
+                    
+                    command.ExecuteNonQuery();
+                }
             }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                throw;
+                return false;
+            }
+            
+            return true;
         }
     }
     
@@ -76,22 +100,22 @@ public class Menu
         
         Console.Clear();
         Animation.PrintRedText("Регистрация профиля", true, false, 70);
-        Animation.PrintSetCursor("Введите ваше имя: ", 22, true, 6);
+        Animation.PrintSetCursor("Введите ваше имя: ", 27, true, 6);
         user.name = Console.ReadLine();
-        Animation.PrintSetCursor("Введите вашу фамилию: ", 22);
+        Animation.PrintSetCursor("Введите вашу фамилию: ", 27);
         user.familyName = Console.ReadLine();
-        Animation.PrintSetCursor("Введите ваш email: ", 22);
+        Animation.PrintSetCursor("Введите ваш email: ", 27);
         user.email = Console.ReadLine();
-        Animation.PrintSetCursor("Введите ваш номер карты (напр. 1234567891234567): ", 22);
+        Animation.PrintSetCursor("Введите ваш номер карты (напр. 1234567891234567): ", 27);
 
-        ulong numberCard;
+        Decimal numberCard;
 
         int cursorPosition = Console.GetCursorPosition().Left;
         
         while (true)
         {
             string temp = Console.ReadLine();
-            if (!ulong.TryParse(temp, out numberCard))
+            if (!Decimal.TryParse(temp, out numberCard))
             {
                 Animation.AnimationText("Ошибка ввода!", true, cursorPosition, temp.Length);
                 continue;
@@ -103,27 +127,28 @@ public class Menu
         }
         user.numberCard = numberCard;
         
-        Animation.PrintSetCursor("Введите ваш CVC код (напр. 123): ", 22);
+        Animation.PrintSetCursor("Введите ваш CVC код (напр. 123): ", 27);
         
         cursorPosition = Console.GetCursorPosition().Left;
-        
+
+        int number;
         while (true)
         {
             string temp = Console.ReadLine();
-            if (!ulong.TryParse(temp, out numberCard))
+            if (!int.TryParse(temp, out number))
             {
                 Animation.AnimationText("Ошибка ввода!", true, cursorPosition, temp.Length);
                 continue;
             }
-            if(numberCard.ToString().Length == 3)
+            if(number.ToString().Length == 3)
                 break;
             
             Animation.AnimationText("Ошибка в цифрах!", true, cursorPosition, temp.Length);
         }
 
-        user.cvcCode = int.Parse(numberCard.ToString());
+        user.cvcCode = number;
         
-        Animation.PrintSetCursor("Введите срок действия карты (напр. 2030-12-30): ", 22);
+        Animation.PrintSetCursor("Введите срок действия карты (напр. 2030-12): ", 27);
 
         cursorPosition = Console.GetCursorPosition().Left;
         
