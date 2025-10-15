@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Text;
 using Dapper;
 using Microsoft.Data.SqlClient;
@@ -8,7 +8,7 @@ namespace MyApp;
 
 internal class Program
 {
-    private const string IP = "192.168.0.149"; 
+    private const string IP = "192.168.8.103"; 
     private const string DATABASE = "Rental_system"; 
     private const string USER = "sa"; 
     
@@ -37,12 +37,35 @@ internal class Program
     {
         Animation.Exit();
     }
-    
+
+    public static List<string> logo = new List<string>();
     
     static void Main(string[] args)
     {
+        
+        logo.Add("▄▄▄  ▄▄▄ . ▐ ▄ ▄▄▄▄▄ ▄▄▄· ▄▄▌    .▄▄ ·  ▄· ▄▌.▄▄ · ▄▄▄▄▄▄▄▄ .• ▌ ▄ ·.      ");
+        logo.Add("▀▄ █·▀▄.▀·•█▌▐█•██  ▐█ ▀█ ██•    ▐█ ▀. ▐█▪██▌▐█ ▀. •██  ▀▄.▀··██ ▐███▪     ");
+        logo.Add("▀▀▄ ▐▀▀▪▄▐█▐▐▌ ▐█.▪▄█▀▀█ ██ ▪   ▄▀▀▀█▄▐█▌▐█▪▄▀▀▀█▄ ▐█.▪▐▀▀▪▄▐█ ▌▐▌▐█·      ");
+        logo.Add("█•█▌▐█▄▄▌██▐█▌ ▐█▌·▐█▪ ▐▌▐█▌ ▄  ▐█▄▪▐█ ▐█▀·.▐█▄▪▐█ ▐█▌·▐█▄▄▌██ ██▌▐█▌      ");
+        logo.Add("         ▄▄▄▄·  ▄· ▄▌  ▄▄▌ ▐ ▄▌ ▄ .▄       ▄▄▄· • ▌ ▄ ·. ▪      ");
+        logo.Add("         ▐█ ▀█▪▐█▪██▌  ██· █▌▐███▪▐█ ▄█▀▄ ▐█ ▀█ ·██ ▐███▪██     ");
+        logo.Add("         ▐█▀▀█▄▐█▌▐█▪  ██▪▐█▐▐▌██▀▀█▐█▌.▐▌▄█▀▀█ ▐█ ▌▐▌▐█·▐█·    ");
+        logo.Add("         ██▄▪▐█ ▐█▀·.  ▐█▌██▐█▌██▌▐▀▐█▌.▐▌▐█▪ ▐▌██ ██▌▐█▌▐█▌    ");
+        logo.Add("         ·▀▀▀▀   ▀ •    ▀▀▀▀ ▀▪▀▀▀ · ▀█▄▀▪ ▀  ▀ ▀▀  █▪▀▀▀▀▀▀    ");
+        
+        
+
+        
         Console.Clear();
 
+        foreach (var item in logo)
+        {
+            Animation.PrintRedText(item, true, false, 3, true, true);
+        }
+        Thread.Sleep(1000);
+        Console.Clear();
+        
+        
         Console.CancelKeyPress += ConsoleOnCancelKeyPress;
         while (true)
         {
