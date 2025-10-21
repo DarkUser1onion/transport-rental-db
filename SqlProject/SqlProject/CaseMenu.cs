@@ -12,3 +12,12 @@ public enum CaseMenu
     Leave = 8
 }
 
+public enum CaseChangeProfile
+{
+    Wallet = 1,
+    Name = 2,
+    FamilyName = 3,
+    Email = 4,
+    Delete = 5
+}
+
