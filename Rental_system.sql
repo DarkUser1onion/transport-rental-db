@@ -25,7 +25,7 @@ CREATE TABLE Rentals
 	id INT NOT NULL PRIMARY KEY IDENTITY,
 	UserId INT NOT NULL FOREIGN KEY REFERENCES Users(id),
 	Start_trip DATETIME NOT NULL,
-	End_trip DATETIME NOT NULL,
+	End_trip DATETIME,
 	Parking_zone INT NOT NULL FOREIGN KEY REFERENCES Parking_zones(id),
 	Vehicle INT NOT NULL FOREIGN KEY REFERENCES Vehicles(id)
 )
@@ -53,4 +53,5 @@ CREATE TABLE Parking_Zones
 	Approximate_address NVARCHAR(255) NOT NULL
 
 )
+
 
