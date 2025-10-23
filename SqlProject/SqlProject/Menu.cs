@@ -187,6 +187,13 @@ public class Menu
             
             try
             {
+                DateTime tempDate = DateTime.Now;
+                if (tempDate >= DateTime.Parse(temp))
+                {
+                    Animation.AnimationText("Ошибка даты!", true, cursorPosition, temp.Length);
+                    continue;
+                }
+                    
                 user.Validity = DateTime.Parse(temp);
                 break;
             }
