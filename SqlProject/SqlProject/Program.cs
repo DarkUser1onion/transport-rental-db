@@ -8,7 +8,7 @@ namespace MyApp;
 
 internal class Program
 {
-    private const string IP = "192.168.0.245";
+    private const string IP = "192.168.9.90";
     private const string DATABASE = "Rental_system";
     private const string USER = "sa";
     
@@ -117,11 +117,11 @@ internal class Program
 
                         if (result)
                         {
-                            Animation.PrintRedText("Данные успешно записаны на сервер!");
+                            Animation.PrintRedText("Данные успешно записаны на сервер!", true, true, 50);
                         }
                         else
                         {
-                            Animation.PrintRedText("Данные не были записаны на сервер!");
+                            Animation.PrintRedText("Данные не были записаны на сервер!", true, true, 50);
                         }
                     }
                     break;
@@ -129,14 +129,19 @@ internal class Program
                     menu.ManagementProfileMenu(con);
                     break;
                 case CaseMenu.ManagementPark:
+                    menu.ManagementFleetMenu(con);
                     break;
                 case CaseMenu.StartRent:
+                    menu.StartRent();
                     break;
                 case CaseMenu.EndRent:
+                    menu.EndRent();
                     break;
                 case CaseMenu.FindGeo:
+                    menu.FindGeo();
                     break;
                 case CaseMenu.Report:
+                    menu.GenerateReport();
                     break;
                 case CaseMenu.Leave:
                     con.Close();
