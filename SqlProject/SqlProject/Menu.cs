@@ -59,506 +59,6 @@ public class Menu
         }
     }
     
-    public class AddParkingZone : IUploadInServer
-    {
-        public decimal Width { private get; set; }
-        public decimal Length { private get; set; }
-        public string ApproximateAddress { private get; set; }
-
-        public AddParkingZone() { }
-
-        public bool Upload(SqlConnection connection)
-        {
-            try
-            {
-                string sql = "INSERT INTO Parking_Zones (Width, Length, Approximate_address) VALUES (@Width, @Length, @ApproximateAddress)";
-                using (SqlCommand command = new SqlCommand(sql, connection))
-                {
-                    command.Parameters.AddWithValue("@Width", Width);
-                    command.Parameters.AddWithValue("@Length", Length);
-                    command.Parameters.AddWithValue("@ApproximateAddress", ApproximateAddress);
-                
-                    int affectedRows = command.ExecuteNonQuery();
-                    return affectedRows > 0;
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.Clear();
-                Animation.PrintRedText($"Ошибка добавления парковочной зоны: {ex.Message}", true, true, 50);
-                return false;
-            }
-        }
-    }
-    
-    public class UserRegistaryForm : IUploadInServer
-    {
-        public string name { private get; set; }
-        public string familyName { private get; set; }
-        public string email { private get; set; }
-        public Decimal numberCard { private get; set; }
-        public int cvcCode { private get; set; }
-        public DateTime Validity { private get; set; }
-        
-        public UserRegistaryForm(){}
-
-        public override string ToString()
-            => $"{name} {familyName} {email} {numberCard} {cvcCode} {Validity}";
-
-
-        public bool Upload(SqlConnection connection)
-        {
-            try
-            {
-                string connectionString =
-                    "INSERT INTO Wallets (Number_card, THREE_code, Validity) VALUES (@numberCard, @cvcCode, @Validity)";
-
-                using (SqlCommand command = new SqlCommand(connectionString, connection))
-                {
-                    command.Parameters.AddWithValue("@cvcCode", cvcCode);
-                    command.Parameters.AddWithValue("@Validity", Validity);
-                    command.Parameters.AddWithValue("@numberCard", numberCard);
-
-                    command.ExecuteNonQuery();
-                }
-
-                int id = connection.Query("SELECT id FROM Wallets WHERE Number_card = @numberCards",
-                    new { @numberCards = numberCard }).First().id;
-
-                connectionString =
-                    "INSERT INTO Users (Name, Family_Name, Email, Wallet) VALUES (@name, @familyName, @email, @Wallet)";
-
-                using (SqlCommand command = new SqlCommand(connectionString, connection))
-                {
-                    command.Parameters.AddWithValue("@name", name);
-                    command.Parameters.AddWithValue("@familyName", familyName);
-                    command.Parameters.AddWithValue("@email", email);
-                    command.Parameters.AddWithValue("@Wallet", id);
-                    
-                    command.ExecuteNonQuery();
-                }
-            }
-            catch (Exception)
-            {
-                return false;
-            }
-            
-            return true;
-        }
-    }
-
-    public class ChangeWallet : IUploadInServer
-    {
-        public string name;
-        public string email;
-
-        
-        private int idWallet;
-        
-        public decimal numberCard { private get; set; }
-        public int cvcCode {private get; set; }
-        public DateTime Validity {private get; set;}
-
-        public ChangeWallet() { }
-
-        public bool SearchData(SqlConnection connection)
-        {
-            try
-            {
-                var result = connection.Query<string>("SELECT W.id FROM Wallets as W, Users as U" +
-                                                      " WHERE U.Email = @email AND U.Wallet = W.id AND U.Name = @name", new {@email = email, @name = name}).First().ToString();
-
-                idWallet = int.Parse(result);
-
-            }
-            catch (Exception)
-            {
-                return false;
-            }
-            
-            return true;
-        }
-        public bool Upload(SqlConnection connection)
-        {
-            try
-            {
-                string connectStr = "UPDATE Wallets SET Number_card = @numberCard, THREE_code = @three_code, Validity = @Validity WHERE Id = @id";
-                using (SqlCommand command = new SqlCommand(connectStr, connection))
-                {
-                    command.Parameters.AddWithValue("@numberCard", numberCard);
-                    command.Parameters.AddWithValue("@three_code", cvcCode);
-                    command.Parameters.AddWithValue("@Validity", Validity);
-                    command.Parameters.AddWithValue("@id", idWallet);
-
-                    command.ExecuteNonQuery();
-                }
-                
-            }
-            catch (Exception)
-            {
-                return false;
-            }
-            
-            return true;
-        }
-    }
-
-    public class ChangeNameOrFamilyName : IUploadInServer
-    {
-        public string name;
-        public string email;
-        public string familyName;
-
-        private int idUser;
-        private bool familyNameValid;
-        public ChangeNameOrFamilyName() {}
-
-        public bool SearchData(SqlConnection connection)
-        {
-            try
-            {
-                string result = connection
-                    .Query<string>("SELECT * FROM Users WHERE Family_Name = @FamilyName AND Email = @Email", new {@FamilyName = this.familyName, @Email = this.email}).First()
-                    .ToString();
-
-                idUser = int.Parse(result);
-            }
-            catch (Exception)
-            {
-                return false;
-            }
-            
-            return true;
-        }
-        
-        public bool SearchDataFamily(SqlConnection connection)
-        {
-            try
-            {
-                string result = connection
-                    .Query<string>("SELECT * FROM Users WHERE Name = @Name AND Email = @Email", new {@Name = this.name, @Email = this.email}).First()
-                    .ToString();
-
-                idUser = int.Parse(result);
-            }
-            catch (Exception e)
-            {
-                return false;
-            }
-            
-            familyNameValid = true;
-            return true;
-        }
-        
-        public bool Upload(SqlConnection connection)
-        {
-            if (familyNameValid)
-            {
-                try
-                {
-                    string connectStr = "UPDATE Users SET Family_Name = @familyName WHERE Id = @id";
-                    using (SqlCommand command = new SqlCommand(connectStr, connection))
-                    {
-                        command.Parameters.AddWithValue("@familyName", familyName);
-                        command.Parameters.AddWithValue("@id", idUser);
-                        command.ExecuteNonQuery();
-                    }
-
-                }
-                catch (Exception)
-                {
-                    return false;
-                }
-            
-                return true;
-            }
-            
-            
-            try
-            {
-                string connectStr = "UPDATE Users SET Name = @name WHERE Id = @id";
-                using (SqlCommand command = new SqlCommand(connectStr, connection))
-                {
-                    command.Parameters.AddWithValue("@name", name);
-                    command.Parameters.AddWithValue("@id", idUser);
-                    
-                    command.ExecuteNonQuery();
-                }
-
-            }
-            catch (Exception)
-            {
-                return false;
-            }
-            
-            return true;
-        }
-        
-    }
-    
-    public class RemoveUser : IUploadInServer
-    {
-        public string name;
-        public string email;
-        public string familyName;
-    
-        private int idUser;
-        private int idWallet;
-
-        public RemoveUser() { }
-
-        public bool SearchData(SqlConnection connection)
-        {
-            try
-            {
-                var result = connection.QueryFirstOrDefault<(int UserId, int WalletId)>(
-                    @"SELECT U.id as UserId, W.id as WalletId 
-                      FROM Users as U 
-                      INNER JOIN Wallets as W ON U.Wallet = W.id 
-                      WHERE U.Name = @Name AND U.Family_Name = @FamilyName AND U.Email = @Email",
-                    new { Name = name, FamilyName = familyName, Email = email });
-
-                if (result.UserId != 0)
-                {
-                    idUser = result.UserId;
-                    idWallet = result.WalletId;
-                    return true;
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.Clear();
-                Console.WriteLine($"Ошибка поиска: {ex.Message}");
-            }
-            return false;
-        }
-
-        public bool CheckRentals(SqlConnection connection)
-        {
-            try
-            {
-                var result = connection.QueryFirstOrDefault<int?>(
-                    "SELECT COUNT(*) FROM Rentals WHERE UserId = @UserId",
-                    new { UserId = idUser });
-
-                return result.HasValue && result.Value > 0;
-            }
-            catch (Exception ex)
-            {
-                return true;
-            }
-        }
-
-        public bool Upload(SqlConnection connection)
-        {
-            using var transaction = connection.BeginTransaction();
-            try
-            {
-                string deleteRentalsSql = "DELETE FROM Rentals WHERE UserId = @UserId";
-                connection.Execute(deleteRentalsSql, new { UserId = idUser }, transaction);
-
-                string deleteUserSql = "DELETE FROM Users WHERE id = @UserId";
-                int userDeleted = connection.Execute(deleteUserSql, new { UserId = idUser }, transaction);
-
-                string deleteWalletSql = "DELETE FROM Wallets WHERE id = @WalletId";
-                int walletDeleted = connection.Execute(deleteWalletSql, new { WalletId = idWallet }, transaction);
-
-                transaction.Commit();
-                return userDeleted > 0 && walletDeleted > 0;
-            }
-            catch (Exception ex)
-            {
-                transaction.Rollback();
-                Console.Clear();
-                Console.WriteLine($"Ошибка удаления: {ex.Message}");
-                return false;
-            }
-        }
-    }
-    
-    public class AddVehicle : IUploadInServer
-    {
-        public string QrCode { private get; set; }
-        public string TypeTransport { private get; set; }
-        public int StatusId { private get; set; }
-
-        public AddVehicle() { }
-
-        public bool Upload(SqlConnection connection)
-        {
-            try
-            {
-                string sql = "INSERT INTO Vehicles (QrCode, Type_Transport, Status) VALUES (@QrCode, @TypeTransport, @StatusId)";
-                using (SqlCommand command = new SqlCommand(sql, connection))
-                {
-                    command.Parameters.AddWithValue("@QrCode", QrCode);
-                    command.Parameters.AddWithValue("@TypeTransport", TypeTransport);
-                    command.Parameters.AddWithValue("@StatusId", StatusId);
-                    
-                    int affectedRows = command.ExecuteNonQuery();
-                    return affectedRows > 0;
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.Clear();
-                Console.WriteLine($"Ошибка добавления: {ex.Message}");
-                return false;
-            }
-        }
-    }
-
-public class RemoveVehicle : IUploadInServer
-{
-    public string QrCode { private get; set; }
-    private int vehicleId;
-
-    public RemoveVehicle() { }
-
-    public bool SearchData(SqlConnection connection)
-    {
-        try
-        {
-            var result = connection.QueryFirstOrDefault<int?>(
-                "SELECT id FROM Vehicles WHERE QrCode = @QrCode",
-                new { QrCode });
-
-            if (result.HasValue)
-            {
-                vehicleId = result.Value;
-                return true;
-            }
-            return false;
-        }
-        catch (Exception ex)
-        {
-            Console.Clear();
-            Console.WriteLine($"Ошибка поиска: {ex.Message}");
-            return false;
-        }
-    }
-
-    public bool CheckRentals(SqlConnection connection)
-    {
-        try
-        {
-            var result = connection.QueryFirstOrDefault<int?>(
-                "SELECT COUNT(*) FROM Rentals WHERE Vehicle = @VehicleId",
-                new { VehicleId = vehicleId });
-
-            return result.HasValue && result.Value > 0;
-        }
-        catch (Exception ex)
-        {
-            Console.Clear();
-            Console.WriteLine($"Ошибка проверки аренд: {ex.Message}");
-            return true;
-        }
-    }
-
-    public bool Upload(SqlConnection connection)
-    {
-        try
-        {
-            string sql = "DELETE FROM Vehicles WHERE id = @VehicleId";
-            using (SqlCommand command = new SqlCommand(sql, connection))
-            {
-                command.Parameters.AddWithValue("@VehicleId", vehicleId);
-                int affectedRows = command.ExecuteNonQuery();
-                return affectedRows > 0;
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.Clear();
-            Console.WriteLine($"Ошибка удаления: {ex.Message}");
-            return false;
-        }
-    }
-}
-
-    public class ChangeVehicleStatus : IUploadInServer
-    {
-        public string QrCode { private get; set; }
-        public int NewStatusId { private get; set; }
-        private int vehicleId;
-
-        public ChangeVehicleStatus() { }
-
-        public bool SearchData(SqlConnection connection)
-        {
-            try
-            {
-                var result = connection.QueryFirstOrDefault<int?>(
-                    "SELECT id FROM Vehicles WHERE QrCode = @QrCode",
-                    new { QrCode });
-
-                if (result.HasValue)
-                {
-                    vehicleId = result.Value;
-                    return true;
-                }
-                return false;
-            }
-            catch (Exception ex)
-            {
-                Console.Clear();
-                Console.WriteLine($"Ошибка поиска: {ex.Message}");
-                return false;
-            } 
-        }
-
-    public bool Upload(SqlConnection connection)
-    {
-        try
-        {
-            string sql = "UPDATE Vehicles SET Status = @NewStatusId WHERE id = @VehicleId";
-            using (SqlCommand command = new SqlCommand(sql, connection))
-            {
-                command.Parameters.AddWithValue("@NewStatusId", NewStatusId);
-                command.Parameters.AddWithValue("@VehicleId", vehicleId);
-                int affectedRows = command.ExecuteNonQuery();
-                return affectedRows > 0;
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.Clear();
-            Console.WriteLine($"Ошибка обновления: {ex.Message}");
-            return false;
-        }
-    }
-}
-    
-    public class AddStatus : IUploadInServer
-    {
-        public string TypeStatus { private get; set; }
-        public string Description { private get; set; }
-
-        public AddStatus() { }
-
-        public bool Upload(SqlConnection connection)
-        {
-            try
-            {
-                string sql = "INSERT INTO Status (Type_status, Description) VALUES (@TypeStatus, @Description)";
-                using (SqlCommand command = new SqlCommand(sql, connection))
-                {
-                    command.Parameters.AddWithValue("@TypeStatus", TypeStatus);
-                    command.Parameters.AddWithValue("@Description", Description);
-                
-                    int affectedRows = command.ExecuteNonQuery();
-                    return affectedRows > 0;
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.Clear();
-                Animation.PrintRedText($"Ошибка добавления статуса: {ex.Message}", true, true, 50);
-                return false;
-            }
-        }
-    }
     
     public static void StartMenu()
     {
@@ -603,15 +103,32 @@ public class RemoveVehicle : IUploadInServer
         user.familyName = ReadLineWithCancel();
         if (exit)
             return null;
+
         Animation.PrintSetCursor("Введите ваш email: ", 27);
-        user.email = ReadLineWithCancel();
-        if (exit)
-            return null;
+        
+        int cursorPosition = Console.GetCursorPosition().Left;
+        
+        while (true)
+        {
+            string tempStr = ReadLineWithCancel();
+
+            if (!tempStr.Contains('@') || !tempStr.Contains('.'))
+            {
+                Animation.AnimationText("Ошибка ввода!", true, cursorPosition, tempStr.Length);
+            }
+            else
+            {
+                break;
+            }
+            
+            if (exit)
+                return null;
+        }
         Animation.PrintSetCursor("Введите ваш номер карты (напр. 1234567891234567): ", 27);
 
         Decimal numberCard;
 
-        int cursorPosition = Console.GetCursorPosition().Left;
+        cursorPosition = Console.GetCursorPosition().Left;
 
         while (true)
         {
@@ -1215,8 +732,9 @@ public class RemoveVehicle : IUploadInServer
             Animation.PrintSetCursor($"{i + 1}) {statuses[i].Type_status} - {statuses[i].Description}", 27);
             Console.WriteLine();
         }
+        Console.WriteLine();
         
-        Animation.PrintSetCursor("Выбор: ", 5, true, 1);
+        Animation.PrintSetCursor("Выбор: ", 27);
         
         cursorPosition = Console.GetCursorPosition().Left;
         int choice;
@@ -1620,136 +1138,6 @@ public class RemoveVehicle : IUploadInServer
         }
     }
     
-    public class StartRental : IUploadInServer
-    {
-        public int UserId { private get; set; }
-        public int VehicleId { private get; set; }
-        public int ParkingZoneId { private get; set; }
-        public DateTime StartTrip { private get; set; }
-
-        public StartRental() { }
-
-        public bool CheckUserExists(SqlConnection connection)
-        {
-            try
-            {
-                var result = connection.QueryFirstOrDefault<int?>(
-                    "SELECT id FROM Users WHERE id = @UserId",
-                    new { UserId });
-                
-                if (!result.HasValue)
-                {
-                    Console.Clear();
-                    Animation.PrintRedText($"Ошибка: пользователь с ID {UserId} не найден!", true, true, 50);
-                    return false;
-                }
-                return true;
-            }
-            catch (Exception ex)
-            {
-                Console.Clear();
-                Animation.PrintRedText($"Ошибка проверки пользователя: {ex.Message}", true, true, 50);
-                return false;
-            }
-        }
-
-        public bool CheckVehicleAvailable(SqlConnection connection)
-        {
-            try
-            {
-                var result = connection.QueryFirstOrDefault<int?>(
-                    @"SELECT V.id FROM Vehicles V 
-                      WHERE V.id = @VehicleId AND V.Status = 1",
-                    new { VehicleId });
-                
-                if (!result.HasValue)
-                {
-                    Console.Clear();
-                    Animation.PrintRedText($"Ошибка: транспорт с ID {VehicleId} не найден или недоступен!", true, true, 50);
-                    return false;
-                }
-                return true;
-            }
-            catch (Exception ex)
-            {
-                Console.Clear();
-                Animation.PrintRedText($"Ошибка проверки транспорта: {ex.Message}", true, true, 50);
-                return false;
-            }
-        }
-
-        public bool CheckParkingZoneExists(SqlConnection connection)
-        {
-            try
-            {
-                var result = connection.QueryFirstOrDefault<int?>(
-                    "SELECT id FROM Parking_Zones WHERE id = @ParkingZoneId",
-                    new { ParkingZoneId });
-                
-                if (!result.HasValue)
-                {
-                    Console.Clear();
-                    Animation.PrintRedText($"Ошибка: парковочная зона с ID {ParkingZoneId} не найдена!", true, true, 50);
-                    return false;
-                }
-                return true;
-            }
-            catch (Exception ex)
-            {
-                Console.Clear();
-                Animation.PrintRedText($"Ошибка проверки парковочной зоны: {ex.Message}", true, true, 50);
-                return false;
-            }
-        }
-
-        public bool Upload(SqlConnection connection)
-        {
-            if (!CheckUserExists(connection))
-                return false;
-                
-            if (!CheckVehicleAvailable(connection))
-                return false;
-                
-            if (!CheckParkingZoneExists(connection))
-                return false;
-
-            using var transaction = connection.BeginTransaction();
-            try
-            {
-                string rentalSql = @"
-                    INSERT INTO Rentals (UserId, Start_trip, Parking_zone, Vehicle) 
-                    VALUES (@UserId, @StartTrip, @ParkingZoneId, @VehicleId)";
-                
-                int affectedRows = connection.Execute(rentalSql, new 
-                { 
-                    UserId, 
-                    StartTrip, 
-                    ParkingZoneId, 
-                    VehicleId 
-                }, transaction);
-
-                string vehicleSql = "UPDATE Vehicles SET Status = 2 WHERE id = @VehicleId";
-                connection.Execute(vehicleSql, new { VehicleId }, transaction);
-
-                transaction.Commit();
-                return affectedRows > 0;
-            }
-            catch (Exception ex)
-            {
-                transaction.Rollback();
-                Console.Clear();
-                Animation.PrintRedText($"Ошибка оформления аренды: {ex.Message}", true, true, 50);
-                
-                if (ex.Message.Contains("FOREIGN KEY"))
-                {
-                    Animation.PrintRedText("Проблема с ссылочной целостностью данных.", true, true, 50);
-                    Animation.PrintRedText("Проверьте существование UserId, VehicleId и ParkingZoneId.", true, true, 50);
-                }
-                
-                return false;
-            }
-        }
-    }
 
     public bool StartRent()
     {
@@ -1767,14 +1155,16 @@ public class RemoveVehicle : IUploadInServer
         try
         {
             var userCount = conn.QueryFirstOrDefault<int>("SELECT COUNT(*) FROM Users");
-            var vehicleCount = conn.QueryFirstOrDefault<int>("SELECT COUNT(*) FROM Vehicles WHERE Status = 1");
+            var vehicleCount = conn.QueryFirstOrDefault<int>(@"
+                    SELECT COUNT(*) FROM Vehicles V 
+                    INNER JOIN Status S ON V.Status = S.id 
+                    WHERE S.Type_status = N'Свободен'");
             var zoneCount = conn.QueryFirstOrDefault<int>("SELECT COUNT(*) FROM Parking_Zones");
             
             Console.Clear();
-            Animation.PrintRedText("Статус системы:", true, false, 50);
-            Console.WriteLine();
-            Console.WriteLine();
-            Console.WriteLine();
+            Animation.PrintRedText("Статус системы", true, false, 50);
+            Console.WriteLine("\n\n\n");
+
             Animation.PrintSetCursor($"Пользователей: {userCount}", 20);
             Console.WriteLine();
             Animation.PrintSetCursor($"Доступного транспорта: {vehicleCount}", 20);
@@ -1782,7 +1172,7 @@ public class RemoveVehicle : IUploadInServer
             Animation.PrintSetCursor($"Парковочных зон: {zoneCount}", 20);
             Console.WriteLine("\n\n");
             Console.WriteLine("\n\n");
-            Animation.PrintSetCursor("Нажмите любую клавишу для продолжения...", 20);
+            Animation.PrintSetCursor("Нажмите любую клавишу для продолжения...", 40);
             Console.ReadKey();
             
             if (userCount == 0)
@@ -1819,23 +1209,18 @@ public class RemoveVehicle : IUploadInServer
         
         Console.Clear();
         Animation.PrintRedText("Выберите пользователя", true, false, 50);
-        Console.WriteLine();
+        Console.WriteLine("\n\n\n");
         
         for (int i = 0; i < users.Count; i++)
         {
             string displayText = $"{i + 1}) ID:{users[i].id} {users[i].Name} {users[i].Family_Name} ({users[i].Email})";
-            if (displayText.Length > Console.WindowWidth - 10)
-            {
-                Console.WriteLine(displayText);
-            }
-            else
-            {
-                Animation.PrintSetCursor(displayText, Math.Min(displayText.Length + 10, Console.WindowWidth - 5));
-                Console.WriteLine();
-            }
+
+            Animation.PrintSetCursor(displayText, 30);
+            
+            Console.WriteLine();
         }
         
-        Animation.PrintSetCursor("Выбор: ", 50);
+        Animation.PrintSetCursor("Выбор: ", 30);
         
         int cursorPosition = Console.GetCursorPosition().Left;
         int userChoice;
@@ -1859,8 +1244,8 @@ public class RemoveVehicle : IUploadInServer
         Animation.AnimationText("Загрузка свободного транспорта...", false, 0, 0, true);
         
         var vehicles = conn.Query(@"SELECT V.id, V.QrCode, V.Type_Transport 
-                                   FROM Vehicles V 
-                                   WHERE V.Status = 1").ToList();
+                                   FROM Vehicles V, Status S
+                                   WHERE S.Type_status = N'Свободен' AND V.Status = S.id").ToList();
         
         if (vehicles.Count == 0)
         {
@@ -1870,7 +1255,7 @@ public class RemoveVehicle : IUploadInServer
         
         Console.Clear();
         Animation.PrintRedText("Выберите транспорт", true, false, 50);
-        Console.WriteLine();
+        Console.WriteLine("\n\n\n");
         
         for (int i = 0; i < vehicles.Count; i++)
         {
@@ -1878,7 +1263,7 @@ public class RemoveVehicle : IUploadInServer
             Console.WriteLine();
         }
         
-        Animation.PrintSetCursor("Выбор: ", 50);
+        Animation.PrintSetCursor("Выбор: ", 27);
         
         cursorPosition = Console.GetCursorPosition().Left;
         int vehicleChoice;
@@ -1905,24 +1290,19 @@ public class RemoveVehicle : IUploadInServer
         
         Console.Clear();
         Animation.PrintRedText("Выберите парковочную зону", true, false, 50);
-        Console.WriteLine();
+        Console.WriteLine("\n\n\n");
         
         for (int i = 0; i < parkingZones.Count; i++)
         {
             string displayText = $"{i + 1}) {parkingZones[i].Approximate_address}";
-            if (displayText.Length > Console.WindowWidth - 10)
-            {
-                Console.WriteLine(displayText);
-            }
-            else
-            {
-                Animation.PrintSetCursor(displayText, Math.Min(displayText.Length + 10, Console.WindowWidth - 5));
-                Console.WriteLine();
-            }
+
+            Animation.PrintSetCursor(displayText, 30);
+            Console.WriteLine();
+            
         }
         
         Console.WriteLine();
-        Animation.PrintSetCursor("Выбор: ", 20);
+        Animation.PrintSetCursor("Выбор: ", 30);
         
         cursorPosition = Console.GetCursorPosition().Left;
         int zoneChoice;
@@ -1961,77 +1341,10 @@ public class RemoveVehicle : IUploadInServer
         }
     }
     
-    public class EndRental : IUploadInServer
-    {
-    public int RentalId { private get; set; }
-    public DateTime ActualEndTime { private get; set; }
-
-    public EndRental() { }
-
-    public bool CheckRentalExists(SqlConnection connection)
-    {
-        try
-        {
-            var result = connection.QueryFirstOrDefault<int?>(
-                "SELECT id FROM Rentals WHERE id = @RentalId AND End_trip > GETDATE()",
-                new { RentalId });
-            return result.HasValue;
-        }
-        catch (Exception)
-        {
-            return false;
-        }
-    }
-
-    public int GetVehicleId(SqlConnection connection)
-    {
-        try
-        {
-            var result = connection.QueryFirstOrDefault<int?>(
-                "SELECT Vehicle FROM Rentals WHERE id = @RentalId",
-                new { RentalId });
-            return result ?? 0;
-        }
-        catch (Exception)
-        {
-            return 0;
-        }
-    }
-
-    public bool Upload(SqlConnection connection)
-    {
-        using var transaction = connection.BeginTransaction();
-        try
-        {
-            string rentalSql = "UPDATE Rentals SET End_trip = @ActualEndTime WHERE id = @RentalId";
-            int affectedRows = connection.Execute(rentalSql, new 
-            { 
-                ActualEndTime, 
-                RentalId 
-            }, transaction);
-
-            int vehicleId = GetVehicleId(connection);
-            
-            string vehicleSql = "UPDATE Vehicles SET Status = 1 WHERE id = @VehicleId";
-            connection.Execute(vehicleSql, new { VehicleId = vehicleId }, transaction);
-
-            transaction.Commit();
-            return affectedRows > 0;
-        }
-        catch (Exception ex)
-        {
-            transaction.Rollback();
-            Console.Clear();
-            Animation.PrintRedText($"Ошибка завершения аренды!", true, true, 50);
-            return false;
-        }
-    }
-}
 
     public bool EndRent()
     {
         exit = false;
-        EndRental endRental = new EndRental();
         
         Console.Clear();
         Animation.PrintRedText("Завершение аренды", true, false, 50);
@@ -2042,10 +1355,19 @@ public class RemoveVehicle : IUploadInServer
         Animation.AnimationText("Загрузка активных аренд...", false, 0, 0, true);
         
         var activeRentals = conn.Query(@"
-            SELECT R.id, U.Name, U.Family_Name, V.Type_Transport, R.Start_trip
+            SELECT 
+                R.id as RentalId,
+                R.Vehicle as VehicleId,
+                U.Name,
+                U.Family_Name, 
+                V.Type_Transport, 
+                V.QrCode, 
+                R.Start_trip,
+                PZ.Approximate_address as StartLocation
             FROM Rentals R
             INNER JOIN Users U ON R.UserId = U.id
             INNER JOIN Vehicles V ON R.Vehicle = V.id
+            INNER JOIN Parking_Zones PZ ON R.Parking_zone = PZ.id
             WHERE R.End_trip IS NULL").ToList();
         
         if (activeRentals.Count == 0)
@@ -2056,14 +1378,17 @@ public class RemoveVehicle : IUploadInServer
         
         Console.Clear();
         Animation.PrintRedText("Выберите аренду для завершения", true, false, 50);
-        Console.WriteLine();
-        Animation.PrintRedText("Выход на Esc", true, false, 50);
-        Console.WriteLine("\n\n\n");
+        Console.WriteLine("\n\n\n\n\n");
         
         for (int i = 0; i < activeRentals.Count; i++)
         {
-            Animation.PrintSetCursor($"{i + 1}) {activeRentals[i].Name} {activeRentals[i].Family_Name} - " +
-                                   $"{activeRentals[i].Type_Transport} (начало: {activeRentals[i].Start_trip:g})", 27);
+            var rental = activeRentals[i];
+            string displayText = $"{i + 1}) ID аренды: {rental.RentalId} - {rental.Name} {rental.Family_Name} - " +
+                               $"{rental.Type_Transport} (QR: {rental.QrCode})";
+            
+            Animation.PrintSetCursor(displayText, 50);
+            Console.WriteLine();
+            Animation.PrintSetCursor($"Начало: {rental.Start_trip:g}, Место: {rental.StartLocation}", 50);
             Console.WriteLine();
         }
         
@@ -2085,22 +1410,69 @@ public class RemoveVehicle : IUploadInServer
             Animation.AnimationText("Ошибка в выборе!", true, cursorPosition, temp.Length);
         }
         
-        endRental.RentalId = activeRentals[rentalChoice - 1].id;
-        endRental.ActualEndTime = DateTime.Now;
+        var selectedRental = activeRentals[rentalChoice - 1];
+        
+        Console.Clear();
+        Animation.AnimationText("Загрузка парковочных зон...", false, 0, 0, true);
+        
+        var parkingZones = conn.Query("SELECT id, Approximate_address FROM Parking_Zones").ToList();
+        
+        if (parkingZones.Count == 0)
+        {
+            Animation.PrintRedText("Нет доступных парковочных зон!", true, true, 50);
+            return false;
+        }
+        
+        Console.Clear();
+        Animation.PrintRedText("Выберите парковочную зону для возврата транспорта", true, false, 50);
+        Console.WriteLine();
+        Animation.PrintRedText($"Возвращаемый транспорт: {selectedRental.Type_Transport} (QR: {selectedRental.QrCode})", true, false, 50);
+        Console.WriteLine("\n\n\n\n\n");
+        
+        for (int i = 0; i < parkingZones.Count; i++)
+        {
+            Animation.PrintSetCursor($"{i + 1}) {parkingZones[i].Approximate_address}", 27);
+            Console.WriteLine();
+        }
+        
+        Animation.PrintSetCursor("Выбор: ", 27);
+        
+        cursorPosition = Console.GetCursorPosition().Left;
+        int zoneChoice;
+        while (true)
+        {
+            string temp = ReadLineWithCancel();
+            if (exit) return false;
+            if (!int.TryParse(temp, out zoneChoice))
+            {
+                Animation.AnimationText("Ошибка ввода!", true, cursorPosition, temp.Length);
+                continue;
+            }
+            if (zoneChoice >= 1 && zoneChoice <= parkingZones.Count)
+                break;
+            Animation.AnimationText("Ошибка в выборе!", true, cursorPosition, temp.Length);
+        }
+        
+        EndRental endRental = new EndRental
+        {
+            RentalId = selectedRental.RentalId,
+            NewParkingZoneId = parkingZones[zoneChoice - 1].id,
+            ActualEndTime = DateTime.Now
+        };
         
         Console.Clear();
         Animation.AnimationText("Завершение аренды...", false, 0, 0, true);
         
         if (!endRental.Upload(conn))
         {
-            Console.Clear();
-            Animation.PrintRedText("Ошибка завершения аренды!", true, true, 50);
             return false;
         }
         else
         {
             Console.Clear();
             Animation.PrintRedText("Аренда успешно завершена!", true, true, 50);
+            Animation.PrintRedText($"Транспорт возвращен в: {parkingZones[zoneChoice - 1].Approximate_address}", true, true, 50);
+            Animation.PrintRedText("Статус транспорта изменен на 'Свободен'.", true, true, 50);
             return true;
         }
     }
@@ -2108,31 +1480,44 @@ public class RemoveVehicle : IUploadInServer
     public void FindGeo()
     {
         Console.Clear();
-        Animation.AnimationText("Загрузка данных о местоположении...", false, 0, 0, true);
+        Animation.AnimationText("Загрузка местоположения транспорта...", false, 0, 0, true);
         
         try
         {
             var vehicleLocations = conn.Query(@"
-                    SELECT 
-                        V.id,
-                        V.QrCode,
-                        V.Type_Transport,
-                        S.Type_status as Status,
-                        PZ.Approximate_address as Location,
-                        CASE 
-                            WHEN R.id IS NOT NULL AND R.End_trip IS NULL THEN 'В аренде'
-                            ELSE 'Свободен'
-                        END as RentalStatus,
-                        U.Name + ' ' + U.Family_Name as RentedBy
-                    FROM Vehicles V
-                    INNER JOIN Status S ON V.Status = S.id
-                    LEFT JOIN Rentals R ON R.Vehicle = V.id AND R.End_trip IS NULL
-                    LEFT JOIN Parking_Zones PZ ON R.Parking_zone = PZ.id
-                    LEFT JOIN Users U ON R.UserId = U.id
-                    ORDER BY V.id").ToList();
+                SELECT 
+                    V.id,
+                    V.QrCode,
+                    V.Type_Transport,
+                    S.Type_status as VehicleStatus,
+                    CASE 
+                        WHEN R.id IS NOT NULL AND R.End_trip IS NULL THEN
+                            PZ.Approximate_address
+                        ELSE 
+                            ISNULL((SELECT TOP 1 PZ2.Approximate_address 
+                                   FROM Rentals R2 
+                                   INNER JOIN Parking_Zones PZ2 ON R2.Parking_zone = PZ2.id 
+                                   WHERE R2.Vehicle = V.id 
+                                   ORDER BY R2.End_trip DESC), 'Локация неизвестна')
+                    END as CurrentLocation,
+                    CASE 
+                        WHEN R.id IS NOT NULL AND R.End_trip IS NULL THEN 'Арендован'
+                        ELSE 'Свободен'
+                    END as RentalStatus,
+                    CASE 
+                        WHEN R.id IS NOT NULL AND R.End_trip IS NULL THEN
+                            U.Name + ' ' + U.Family_Name
+                        ELSE ''
+                    END as RentedBy
+                FROM Vehicles V
+                INNER JOIN Status S ON V.Status = S.id
+                LEFT JOIN Rentals R ON R.Vehicle = V.id AND R.End_trip IS NULL
+                LEFT JOIN Parking_Zones PZ ON R.Parking_zone = PZ.id
+                LEFT JOIN Users U ON R.UserId = U.id
+                ORDER BY V.id").ToList();
             
             Console.Clear();
-            Animation.PrintRedText("Геолокация транспортов", true, false, 50);
+            Animation.PrintRedText("Геолокация транспорта", true, false, 50);
             Console.WriteLine("\n\n\n");
             
             if (vehicleLocations.Count == 0)
@@ -2142,42 +1527,37 @@ public class RemoveVehicle : IUploadInServer
             else
             {
                 Animation.PrintSetCursor("ID".PadRight(5) + "QR-код".PadRight(21) + "Тип".PadRight(15) + 
-                                       "Статус".PadRight(12) + "Аренда".PadRight(12) + "Местоположение", 50, true, 2);
+                                       "Статус".PadRight(12) + "Местоположение", 50, true, 2);
                 Console.WriteLine();
-                Animation.PrintSetCursor(new string('-', 90), 50);
+                Animation.PrintSetCursor(new string('-', 80), 50);
                 Console.WriteLine();
                 
                 foreach (var vehicle in vehicleLocations)
                 {
-                    string location = vehicle.Location ?? "Не указано";
-                    string rentedBy = vehicle.RentedBy ?? "-";
-                    
                     Animation.PrintSetCursor(
                         vehicle.id.ToString().PadRight(5) + 
                         vehicle.QrCode.PadRight(21) + 
                         vehicle.Type_Transport.PadRight(15) + 
-                        vehicle.Status.PadRight(12) + 
-                        vehicle.RentalStatus.PadRight(12) + 
-                        location, 50);
+                        vehicle.VehicleStatus.PadRight(12) + 
+                        vehicle.CurrentLocation, 50);
                     Console.WriteLine();
                     
-                    if (vehicle.RentalStatus == "В аренде")
+                    if (vehicle.RentalStatus == "Арендован" && !string.IsNullOrEmpty(vehicle.RentedBy))
                     {
-                        Animation.PrintSetCursor("     Арендован: " + rentedBy, 50);
+                        Animation.PrintSetCursor("     Арендован: " + vehicle.RentedBy, 20);
                         Console.WriteLine();
                     }
                 }
             }
             
             Console.WriteLine("\n\n");
-            Console.WriteLine("\n\n");
-            Animation.PrintSetCursor("Нажмите любую клавишу для продолжения...", 50);
+            Animation.PrintSetCursor("Нажмите любую клавишу для продолжения...", 20);
             Console.ReadKey();
         }
         catch (Exception ex)
         {
             Console.Clear();
-            Animation.PrintRedText($"Ошибка загрузки данных: {ex.Message}", true, true, 50);
+            Animation.PrintRedText($"Ошибка загрузки геолокации: {ex.Message}", true, true, 50);
         }
     }
     
@@ -2311,11 +1691,11 @@ public class RemoveVehicle : IUploadInServer
             ").First();
             
             Console.Clear();
-            Animation.PrintRedText("ПОЛНЫЙ ОТЧЕТ СИСТЕМЫ АРЕНДЫ", true, false, 50);
-            Console.WriteLine();
+            Animation.PrintRedText("Полный отчет системы аренды", true, false, 50);
+            Console.WriteLine("\n\n\n");
             
-            Animation.PrintSetCursor("=== ОБЩАЯ СТАТИСТИКА ===", 20, true, 2);
-            Console.WriteLine();
+            Animation.PrintCenterTerminal("=== ОБЩАЯ СТАТИСТИКА ===");
+            Console.WriteLine("\n\n\n");
             Animation.PrintSetCursor($"Пользователей: {generalStats.TotalUsers}", 40);
             Console.WriteLine();
             Animation.PrintSetCursor($"Транспортных средств: {generalStats.TotalVehicles}", 40);
@@ -2331,8 +1711,10 @@ public class RemoveVehicle : IUploadInServer
             Animation.PrintSetCursor($"Кошельков: {generalStats.TotalWallets}", 40);
             Console.WriteLine("\n\n");
             
-            Animation.PrintSetCursor("Нажмите любую клавишу для продолжения...", 20);
+            Animation.PrintCenterTerminal("Нажмите любую клавишу для продолжения...");
             Console.ReadKey();
+            Console.Clear();
+            Animation.AnimationText("Формирование отчета...", false, 0, 0, true);
             
             var users = conn.Query(@"
                 SELECT U.id, U.Name, U.Family_Name, U.Email, W.Number_card, W.Validity,
@@ -2343,7 +1725,7 @@ public class RemoveVehicle : IUploadInServer
             
             Console.Clear();
             Animation.PrintRedText("ОТЧЕТ: ПОЛЬЗОВАТЕЛИ", true, false, 50);
-            Console.WriteLine();
+            Console.WriteLine("\n\n\n");
             
             if (users.Count == 0)
             {
@@ -2351,8 +1733,8 @@ public class RemoveVehicle : IUploadInServer
             }
             else
             {
-                Animation.PrintSetCursor($"Всего пользователей: {users.Count}", 20, true, 2);
-                Console.WriteLine();
+                Animation.PrintCenterTerminal($"Всего пользователей: {users.Count}");
+                Console.WriteLine("\n\n\n");
                 Animation.PrintSetCursor("ID".PadRight(5) + "Имя".PadRight(15) + "Фамилия".PadRight(15) + 
                                        "Email".PadRight(25) + "Аренд".PadRight(8) + "Номер карты".PadRight(20) + "Срок действия", 80);
                 Console.WriteLine();
@@ -2374,8 +1756,10 @@ public class RemoveVehicle : IUploadInServer
             }
             
             Console.WriteLine("\n\n");
-            Animation.PrintSetCursor("Нажмите любую клавишу для продолжения...", 20);
+            Animation.PrintCenterTerminal("Нажмите любую клавишу для продолжения...");
             Console.ReadKey();
+            Console.Clear();
+            Animation.AnimationText("Формирование отчета...", false, 0, 0, true);
             
             var vehicles = conn.Query(@"
                 SELECT V.id, V.QrCode, V.Type_Transport, S.Type_status as Status, S.Description,
@@ -2386,7 +1770,7 @@ public class RemoveVehicle : IUploadInServer
             
             Console.Clear();
             Animation.PrintRedText("ОТЧЕТ: ТРАНСПОРТ", true, false, 80);
-            Console.WriteLine();
+            Console.WriteLine("\n\n\n");
             
             if (vehicles.Count == 0)
             {
@@ -2394,8 +1778,8 @@ public class RemoveVehicle : IUploadInServer
             }
             else
             {
-                Animation.PrintSetCursor($"Всего транспортных средств: {vehicles.Count}", 20, true, 2);
-                Console.WriteLine();
+                Animation.PrintCenterTerminal($"Всего транспортных средств: {vehicles.Count}");
+                Console.WriteLine("\n\n\n");
                 Animation.PrintSetCursor("ID".PadRight(5) + "QR-код".PadRight(21) + "Тип".PadRight(15) + 
                                        "Статус".PadRight(12) + "Аренд".PadRight(8) + "Описание", 80);
                 Console.WriteLine();
@@ -2416,8 +1800,10 @@ public class RemoveVehicle : IUploadInServer
             }
             
             Console.WriteLine("\n\n");
-            Animation.PrintSetCursor("Нажмите любую клавишу для продолжения...", 20);
+            Animation.PrintCenterTerminal("Нажмите любую клавишу для продолжения...");
             Console.ReadKey();
+            Console.Clear();
+            Animation.AnimationText("Формирование отчета...", false, 0, 0, true);
             
             var parkingZones = conn.Query(@"
                 SELECT PZ.id, PZ.Width, PZ.Length, PZ.Approximate_address,
@@ -2427,7 +1813,7 @@ public class RemoveVehicle : IUploadInServer
             
             Console.Clear();
             Animation.PrintRedText("ОТЧЕТ: ПАРКОВОЧНЫЕ ЗОНЫ", true, false, 50);
-            Console.WriteLine();
+            Console.WriteLine("\n\n\n");
             
             if (parkingZones.Count == 0)
             {
@@ -2435,8 +1821,8 @@ public class RemoveVehicle : IUploadInServer
             }
             else
             {
-                Animation.PrintSetCursor($"Всего парковочных зон: {parkingZones.Count}", 80, true, 2);
-                Console.WriteLine();
+                Animation.PrintCenterTerminal($"Всего парковочных зон: {parkingZones.Count}");
+                Console.WriteLine("\n\n\n");
                 Animation.PrintSetCursor("ID".PadRight(5) + "Ширина".PadRight(12) + "Длина".PadRight(12) + 
                                        "Аренд".PadRight(8) + "Адрес", 80);
                 Console.WriteLine();
@@ -2456,8 +1842,10 @@ public class RemoveVehicle : IUploadInServer
             }
             
             Console.WriteLine("\n\n");
-            Animation.PrintSetCursor("Нажмите любую клавишу для продолжения...", 20);
+            Animation.PrintCenterTerminal("Нажмите любую клавишу для продолжения...");
             Console.ReadKey();
+            Console.Clear();
+            Animation.AnimationText("Формирование отчета...", false, 0, 0, true);
             
             var rentals = conn.Query(@"
                 SELECT 
@@ -2481,7 +1869,7 @@ public class RemoveVehicle : IUploadInServer
             
             Console.Clear();
             Animation.PrintRedText("ОТЧЕТ: ИСТОРИЯ АРЕНД", true, false, 50);
-            Console.WriteLine();
+            Console.WriteLine("\n\n\n");
             
             if (rentals.Count == 0)
             {
@@ -2489,12 +1877,12 @@ public class RemoveVehicle : IUploadInServer
             }
             else
             {
-                Animation.PrintSetCursor($"Всего аренд в истории: {rentals.Count}", 20, true, 2);
-                Console.WriteLine();
+                Animation.PrintCenterTerminal($"Всего аренд в истории: {rentals.Count}");
+                Console.WriteLine("\n\n\n");
                 Animation.PrintSetCursor("ID".PadRight(5) + "Пользователь".PadRight(25) + "Транспорт".PadRight(15) + 
-                                       "Начало".PadRight(20) + "Окончание".PadRight(20) + "Статус".PadRight(10) + "Длительность", 80);
+                                       "Начало".PadRight(20) + "Окончание".PadRight(20) + "Статус".PadRight(10) + "Длительность", 120);
                 Console.WriteLine();
-                Animation.PrintSetCursor(new string('-', 120), 80);
+                Animation.PrintSetCursor(new string('-', 120), 120);
                 Console.WriteLine();
                 
                 foreach (var rental in rentals)
@@ -2511,7 +1899,7 @@ public class RemoveVehicle : IUploadInServer
                         rental.Start_trip.ToString("dd.MM.yyyy HH:mm").PadRight(20) + 
                         endTime.PadRight(20) + 
                         rental.Status.PadRight(10) + 
-                        duration, 80);
+                        duration, 120);
                     Console.WriteLine();
                 }
             }
@@ -2520,7 +1908,7 @@ public class RemoveVehicle : IUploadInServer
             
             Console.WriteLine("\n\n");
             Animation.PrintSetCursor("=== СТАТУСЫ ТРАНСПОРТА ===", 20);
-            Console.WriteLine();
+            Console.WriteLine("\n\n\n");
             
             if (statuses.Count == 0)
             {
@@ -2537,9 +1925,10 @@ public class RemoveVehicle : IUploadInServer
             
             Console.WriteLine("\n\n");
             Animation.PrintSetCursor("=== ОТЧЕТ СФОРМИРОВАН ===", 20);
-            Console.WriteLine();
-            Animation.PrintSetCursor("Нажмите любую клавишу для возврата в меню...", 40);
+            Console.WriteLine("\n\n");
+            Animation.PrintCenterTerminal("Нажмите любую клавишу для возврата в меню...");
             Console.ReadKey();
+            Console.Clear();
         }
         catch (Exception ex)
         {
