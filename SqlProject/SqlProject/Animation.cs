@@ -48,13 +48,19 @@ public class Animation
     public static void PrintRedText(string text, bool center = false, bool centerTerminal = false, int durability = 0, bool fastEnd = false, bool newLine = false)
     {
         if(centerTerminal)
-            if (centerTerminal)
-                for (int i = 0; i < Console.WindowHeight/2; i++)
-                    Console.WriteLine();
-        
+        {
+            for (int i = 0; i < Console.WindowHeight/2; i++)
+                Console.WriteLine();
+        }
+    
         if (center)
-            Console.SetCursorPosition((Console.WindowWidth - text.Length) / 2, Console.CursorTop);
-        
+        {
+            int left = (Console.WindowWidth - text.Length) / 2;
+            if (left < 0) left = 0;
+            if (left >= Console.WindowWidth) left = Console.WindowWidth - 1;
+            Console.SetCursorPosition(left, Console.CursorTop);
+        }
+    
         Console.ForegroundColor = ConsoleColor.Red;
 
         for (int i = 0; i < text.Length; i++)
@@ -65,7 +71,7 @@ public class Animation
 
         if (!fastEnd)
             Thread.Sleep(1000);
-        
+    
         if(newLine)
             Console.WriteLine();
         Console.ForegroundColor = ConsoleColor.White;
@@ -86,11 +92,15 @@ public class Animation
     public static void PrintSetCursor(string text, int length, bool center = false, int durabily = 0)
     {
         if(center)
-            if (center)
-                for (int i = 0; i < Console.WindowHeight/2 - durabily/2; i++)
-                    Console.WriteLine();
-        
-        Console.SetCursorPosition((Console.WindowWidth - length) / 2, Console.CursorTop);
+        {
+            for (int i = 0; i < Console.WindowHeight/2 - durabily/2; i++)
+                Console.WriteLine();
+        }
+    
+        int left = (Console.WindowWidth - length) / 2;
+        if (left < 0) left = 0;
+        if (left >= Console.WindowWidth) left = Console.WindowWidth - 1;
+        Console.SetCursorPosition(left, Console.CursorTop);
         Console.Write(text);
     }
 
